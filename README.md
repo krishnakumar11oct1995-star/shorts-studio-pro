@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.svg" alt="shorts-studio-pro Logo" width="160" />
+</p>
+
 # Shorts Studio Pro & Sensory Video Generator
 
 > Automated video generation pipeline for viral YouTube Shorts (fake chat format) and infant sensory visual stimulation videos.

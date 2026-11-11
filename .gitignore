@@ -11,3 +11,7 @@ __pycache__/
 output/
 test_output_tts/
 *.log
+
+!assets/logo.svg
+!assets/
+!assets/**
