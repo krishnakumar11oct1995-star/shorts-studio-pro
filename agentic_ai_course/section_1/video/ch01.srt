@@ -1,0 +1,60 @@
+1
+00:00:00,100 --> 00:00:03,862
+Welcome to Agentic AI and Autonomous Coding.
+
+2
+00:00:03,862 --> 00:00:14,568
+Today, we are dissecting why standard AI copilots hit a wall on complex software engineering tasks, and why autonomous state machines are structurally required to replace them.
+
+3
+00:00:15,268 --> 00:00:20,631
+In a standard copilot setup, the model operates in a blind forward pass.
+
+4
+00:00:20,631 --> 00:00:25,743
+You feed it a prompt and open file buffers, and it predicts a block of code.
+
+5
+00:00:25,743 --> 00:00:30,493
+But there is no compiler, no test runner, and no feedback loop.
+
+6
+00:00:30,493 --> 00:00:33,864
+The model cannot know if its code compiles.
+
+7
+00:00:34,564 --> 00:00:39,626
+Compounding this is attention dilution, known as the Lost in the Middle phenomenon.
+
+8
+00:00:39,626 --> 00:00:46,577
+Foundation models show high recall at the start and end of a prompt, but recall drops precipitously in the middle.
+
+9
+00:00:46,577 --> 00:00:51,432
+Dumping entire codebases into context degrades reasoning accuracy.
+
+10
+00:00:52,132 --> 00:01:05,664
+This creates four catastrophic production failures: tool argument hallucination, state drift where earlier constraints are forgotten, ungrounded assumptions, and silent regressions that break interfaces in neighboring modules.
+
+11
+00:01:06,364 --> 00:01:09,539
+The solution is an Agentic State Machine.
+
+12
+00:01:09,539 --> 00:01:12,989
+We couple the model to a deterministic runtime.
+
+13
+00:01:12,989 --> 00:01:24,144
+The model plans, calls concrete tools, observes real execution feedback from stdout and stderr, and iterates until an automated verification gate passes one hundred percent.
+
+14
+00:01:24,844 --> 00:01:32,007
+Autonomous software engineering requires moving beyond single-turn suggestions to deterministic execution loops.
+
+15
+00:01:32,007 --> 00:01:36,672
+In this course, we build this production-grade engine from the ground up.
+

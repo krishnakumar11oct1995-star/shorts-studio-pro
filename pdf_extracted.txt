@@ -1,0 +1,179 @@
+=== PAGE 1 ===
+Technical Design Document: 
+Daily Digest for Encounter Task Reviews 
+Author: Meghana  |  Date: August 26, 2026  |  Status: Approved for Implementation 
+Target Environment: Sandbox (allianceortho--stage) / Production (Alliance Prod) 
+1. Executive Summary 
+This document specifies the technical architecture, business logic, and deployment strategy for replacing 
+individual, real-time email alerts with a unified End-of-Day Daily Digest Email for Managers and Team 
+Leads. 
+Currently, whenever an Encounter__c reaches 3 completed non-admin tasks, an immediate email is fired to 
+the respective manager or team lead. In Production, with ~6,000 completed tasks processed daily, this 
+generates ~110 to 125 individual email notifications per day, causing inbox fatigue and notification noise. 
+The Solution: Implement a Scheduled Batch Apex Job that runs daily at 6:00 PM EST, aggregates all 
+qualifying encounters completed that day by team members, and sends a single, consolidated HTML digest 
+table to each respective Manager/Team Lead. 
+2. Production Data Analysis & Sizing 
+The technical design is grounded directly on live Production metrics extracted from Alliance Prod: 
+Metric 
+Measured Daily Volume in 
+Production 
+Technical Implication 
+Total Completed Tasks / Day 
+~6,000 tasks 
+High transaction volume; requires 
+bulk-safe processing. 
+Encounter Task Volume (a2l prefix) 
+~5,950 tasks 
+Dominates the task activity in the 
+org. 
+Non-Admin Encounter Tasks 
+~4,815 tasks 
+~1,100 tasks are automated/admin 
+actions excluded by logic. 
+Daily Active System Admins 
+17 Users 
+Dynamically queried and excluded 
+from task counts. 
+Encounters Hitting 3+ Tasks / Day 
+110 – 125 Encounters 
+Current design sends 110–125 
+emails. New design sends 1 email 
+
+=== PAGE 2 ===
+per active Manager (~5–15 total 
+emails). 
+Record Key Prefix 
+a2l (Prod) vs a2g (Sandbox) 
+Query handles object types 
+dynamically without hardcoding 
+prefixes. 
+ 
+3. Why Scheduled Batch Apex vs. Flow? 
+Criteria 
+Scheduled Batch Apex 
+(Selected Solution) 
+Record-Triggered Flow / 
+Scheduled Flow 
+Notification Frequency 
+1 email per Manager at End-of-Day 
+summarizing all team encounters. 
+110–125 emails scattered 
+throughout the day (Notification 
+Spam). 
+Grouping & Aggregation 
+Native in-memory grouping using 
+Map<Id, List<Encounter>> 
+mapped to Manager ID. 
+Extremely complex in Flow; Flow 
+loops struggle with multi-level 
+nested groupings. 
+Email Presentation 
+High-quality HTML table with row 
+styling, task counts, and clickable 
+links. 
+Plain text or disjointed single-
+record messages. 
+Governor Limit Safety 
+Batch job processes records in 
+chunks of 200 with isolated 12-
+minute CPU limits. 
+Risk of hitting SOQL/collection 
+limits when looping through 
+thousands of tasks. 
+Peak-Hour Impact 
+0 ms overhead during business 
+hours. No CPU overhead on task 
+saves. 
+Runs queries on every single task 
+completion during peak hours. 
+ 
+4. Business Logic Parity with Existing Flow 
+The Scheduled Apex solution preserves 100% of the business logic, role hierarchies, and exclusion rules 
+built into the current Flow: 
+1. Admin Exclusion: Excludes all tasks created/modified by active System Administrators (Profile.Name = 
+'System Administrator'). 
+
+=== PAGE 3 ===
+2. Task Count Threshold: Identifies encounters with >= 3 completed non-admin tasks. 
+3. Duplicate Prevention: Only evaluates encounters where Manager_Notified__c = false. 
+4. Role Routing Matrix: 
+   • AR Specialist / Team Lead: Finds Parent Role. 
+   • Offshore Roles: Standard Parent Role mapping. 
+   • Conservative, Medical, Surgical, PIP: Climbs two levels up (Team Lead -> Group Lead -> Manager). 
+5. Encounter Flagging: Flags Manager_Notified__c = true after the email digest is sent. 
+5. End-of-Day Digest Email Preview 
+Each Manager/Team Lead receives one personalized email at 6:00 PM summarizing only the encounters 
+managed by their team members: 
+Subject: 📋 Daily Summary: Encounters Requiring Review - August 26, 2026 
+ 
+Hi Sarah Johnson, 
+ 
+Below is the summary of 4 Encounters reviewed by your team today that have 3 or more completed tasks. 
+Please review and verify whether these tasks are expected. 
+ 
+Encounter Name 
+Task Completed By 
+Completed Tasks 
+Action 
+ALYSSA MONACO - Barry 
+Wisse 
+Mark Davis (AR) 
+3 
+View Encounter 
+MAYBELLE MANINGAT - 
+Tadeusz Nowicki 
+Emma Watson (AR) 
+3 
+View Encounter 
+GREGORY BYRNE - 
+Tyshan James 
+Mark Davis (AR) 
+4 
+View Encounter 
+ANDREW SIM - Guillermo 
+Rodriguez 
+Alex Chen (TL) 
+3 
+View Encounter 
+ 
+6. Technical Implementation Blueprint 
+A. Apex Batch & Schedulable Class 
+
+=== PAGE 4 ===
+(EncounterDailyDigestBatch.cls) (EncounterDailyDigestScheduler.cls) 
+7. Deployment & Scheduling Guide 
+Step 1: Deploy Required Metadata 
+1. Deploy Field: Encounter__c.Manager_Notified__c (Checkbox, Default: False). 
+2. Deploy Apex Classes: EncounterDailyDigestBatch.cls and EncounterDailyDigestBatchTest.cls, 
+EncounterDailyDigestScheduler, EncounterDailyDigestSchedulerTest. 
+3. Deactivate Old Flow: Deactivate Send_Notification_To_Managers_TeamLeads in Production. 
+Step 2: Schedule the Daily Batch Job 
+Execute the following one-line anonymous Apex command or use the Salesforce UI (Setup -> Apex Classes 
+-> Schedule Apex): 
+// Schedules the Digest to run daily at 6:00 PM EST (Monday to Sunday) 
+System.schedule( 
+    'Daily Encounter Task Review Digest',  
+    '0 0 18 * * ?',  
+    new EncounterDailyDigestBatch() 
+); 
+8. Summary of Benefits & Governance 
+Requirement / Objective 
+How This Solution Delivers 
+Eliminate Inbox Spam 
+Reduces email volume from ~120 individual alerts to 1 
+clean summary per manager per day. 
+Peak-Hour Performance 
+Zero CPU impact on daytime task completions (~6,000 
+tasks/day). 
+100% Logic Parity 
+Implements the exact same Admin exclusion, 3-task 
+threshold, and multi-tier role hierarchy as the Flow. 
+Executive Presentation 
+Managers receive a styled HTML table with direct 
+Lightning navigation links. 
+Fail-Safe & Idempotent 
+Uses Manager_Notified__c = true so no encounter is 
+ever double-reported. 
+ 
+

@@ -1,0 +1,105 @@
+{
+  "total_duration": 29.036,
+  "letters": {
+    "A": 0.899,
+    "B": 1.427,
+    "C": 1.98,
+    "D": 2.629,
+    "E": 3.218,
+    "F": 3.747,
+    "G": 4.288,
+    "H": 6.077,
+    "I": 6.665,
+    "J": 7.182,
+    "K": 7.783,
+    "L": 8.384,
+    "M": 8.925,
+    "N": 9.478,
+    "O": 10.019,
+    "P": 10.452,
+    "Q": 12.19,
+    "R": 12.827,
+    "S": 13.392,
+    "T": 13.933,
+    "U": 14.498,
+    "V": 15.003,
+    "W": 16.72,
+    "X": 17.537,
+    "Y": 18.223,
+    "Z": 19.052
+  },
+  "verses": [
+    {
+      "id": "v1",
+      "subtitle": "A  B  C  D  E  F  G",
+      "start": 0.8,
+      "end": 5.528,
+      "letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ]
+    },
+    {
+      "id": "v2",
+      "subtitle": "H  I  J  K  L  M  N  O  P",
+      "start": 5.978,
+      "end": 11.642,
+      "letters": [
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P"
+      ]
+    },
+    {
+      "id": "v3",
+      "subtitle": "Q  R  S  T  U  V",
+      "start": 12.092,
+      "end": 16.172,
+      "letters": [
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V"
+      ]
+    },
+    {
+      "id": "v4",
+      "subtitle": "W  X  Y  and  Z",
+      "start": 16.622,
+      "end": 20.27,
+      "letters": [
+        "W",
+        "X",
+        "Y",
+        "Z"
+      ]
+    },
+    {
+      "id": "v5",
+      "subtitle": "Now I know my ABCs!",
+      "start": 20.72,
+      "end": 23.432,
+      "letters": []
+    },
+    {
+      "id": "v6",
+      "subtitle": "Next time won't you sing with me!",
+      "start": 23.882,
+      "end": 26.786,
+      "letters": []
+    }
+  ]
+}

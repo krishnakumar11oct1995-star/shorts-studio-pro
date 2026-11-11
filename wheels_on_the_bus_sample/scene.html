@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Wheels on the Bus - 3D Cartoon Scene</title>
+  <script src="three.min.js"></script>
+  <script src="export/timings.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #0f172a;
+      overflow: hidden;
+      font-family: 'Fredoka One', 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    #viewport {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background: #7dd3fc;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+    canvas {
+      display: block;
+      width: 1920px;
+      height: 1080px;
+    }
+    #ui-overlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 60px;
+    }
+    .header-badge {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      padding: 14px 28px;
+      border-radius: 50px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      border: 3px solid #facc15;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-badge span.icon { font-size: 32px; }
+    .header-badge span.title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #b45309;
+      letter-spacing: 0.5px;
+    }
+
+    /* Action Badge (Wheels / Wipers / Horn / Doors / People) */
+    #action-badge {
+      position: absolute;
+      top: 140px;
+      right: 80px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 5px solid #facc15;
+      border-radius: 30px;
+      box-shadow: 0 15px 35px rgba(245, 158, 11, 0.35);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transform: scale(0.9);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #action-badge .icon { font-size: 50px; }
+    #action-badge .label { font-size: 28px; font-weight: 800; color: #b45309; }
+
+    /* Bottom Karaoke Subtitle */
+    .subtitle-card {
+      align-self: center;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      padding: 22px 60px;
+      border-radius: 40px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      border: 4px solid #facc15;
+      text-align: center;
+      max-width: 1550px;
+      transition: all 0.2s ease;
+    }
+    .subtitle-text {
+      font-size: 46px;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: 1.5px;
+    }
+
+    #play-btn {
+      position: absolute;
+      bottom: 40px;
+      right: 60px;
+      pointer-events: auto;
+      background: #facc15;
+      color: #78350f;
+      border: none;
+      padding: 16px 36px;
+      font-size: 24px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      transition: transform 0.15s, background 0.15s;
+    }
+    #play-btn:hover {
+      background: #eab308;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="ui-overlay">
+      <div class="header-badge">
+        <span class="icon">🚌</span>
+        <span class="title">Wheels on the Bus · CoComelon 3D</span>
+      </div>
+
+      <div id="action-badge">
+        <span id="action-icon" class="icon">🎡</span>
+        <span id="action-label" class="label">Round and Round!</span>
+      </div>
+
+      <div class="subtitle-card">
+        <div id="subtitles" class="subtitle-text">
+          <span>The wheels on the bus go round and round!</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="play-btn">▶ Play Song</button>
+    <audio id="audioTrack" src="export/wheels_on_the_bus_master.mp3" preload="auto"></audio>
+  </div>
+
+  <script>
+    // ----------------------------------------------------
+    // 1. Scene, Camera, Renderer Setup
+    // ----------------------------------------------------
+    const viewport = document.getElementById('viewport');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x7dd3fc);
+    scene.fog = new THREE.FogExp2(0xbae6fd, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(40, 1920 / 1080, 0.1, 1000);
+    camera.position.set(12, 5, 20);
+    camera.lookAt(0, 2, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(1920, 1080);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    viewport.insertBefore(renderer.domElement, viewport.firstChild);
+
+    // ----------------------------------------------------
+    // 2. Lighting (Warm Sunny Cartoon Aesthetic)
+    // ----------------------------------------------------
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x38bdf8, 0.8);
+    scene.add(hemiLight);
+
+    const sun = new THREE.DirectionalLight(0xfffaed, 1.4);
+    sun.position.set(25, 45, 25);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 140;
+    sun.shadow.camera.left = -40;
+    sun.shadow.camera.right = 40;
+    sun.shadow.camera.top = 40;
+    sun.shadow.camera.bottom = -40;
+    sun.shadow.bias = -0.0004;
+    scene.add(sun);
+
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.5);
+    fillLight.position.set(-25, 15, -20);
+    scene.add(fillLight);
+
+    // ----------------------------------------------------
+    // 3. Environment: Asphalt Road, Town Buildings, Trees
+    // ----------------------------------------------------
+    // Ground Grass
+    const grassGeo = new THREE.PlaneGeometry(300, 160);
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.8 });
+    const grass = new THREE.Mesh(grassGeo, grassMat);
+    grass.rotation.x = -Math.PI / 2;
+    grass.position.y = -0.1;
+    grass.receiveShadow = true;
+    scene.add(grass);
+
+    // Asphalt Road (running along X axis, width 7 units in Z)
+    const roadGeo = new THREE.PlaneGeometry(300, 7.5);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0.0, 0);
+    road.receiveShadow = true;
+    scene.add(road);
+
+    // Dashed Center Yellow Lines
+    const lineMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 });
+    for (let x = -140; x <= 140; x += 6.0) {
+      const lineMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.25), lineMat);
+      lineMesh.rotation.x = -Math.PI / 2;
+      lineMesh.position.set(x, 0.02, 0);
+      scene.add(lineMesh);
+    }
+
+    // Sidewalk Curbs
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6 });
+    const curbNorth = new THREE.Mesh(new THREE.BoxGeometry(300, 0.25, 1.2), curbMat);
+    curbNorth.position.set(0, 0.12, 4.3);
+    scene.add(curbNorth);
+
+    const curbSouth = new THREE.Mesh(new THREE.BoxGeometry(300, 0.25, 1.2), curbMat);
+    curbSouth.position.set(0, 0.12, -4.3);
+    scene.add(curbSouth);
+
+    // Cartoon Town Houses / Buildings in background (along Z = -9)
+    const bldgColors = [0x38bdf8, 0xf472b6, 0x4ade80, 0xfb923c, 0xa78bfa, 0xfde047];
+    for (let x = -110; x <= 110; x += 18) {
+      const bColor = bldgColors[Math.abs(Math.floor(x / 18)) % bldgColors.length];
+      const h = 7.0 + (Math.abs(x) % 5);
+      const bldg = new THREE.Mesh(new THREE.BoxGeometry(10, h, 6), new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.4 }));
+      bldg.position.set(x, h / 2, -10.5);
+      bldg.castShadow = true;
+      scene.add(bldg);
+
+      // Roof
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(7.2, 2.8, 4), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 }));
+      roof.rotateY(Math.PI / 4);
+      roof.position.set(x, h + 1.4, -10.5);
+      scene.add(roof);
+
+      // Windows
+      const winMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
+      for (let wy = 2.0; wy < h - 1.5; wy += 2.2) {
+        for (let wx of [-2.5, 2.5]) {
+          const win = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 0.2), winMat);
+          win.position.set(x + wx, wy, -7.4);
+          scene.add(win);
+        }
+      }
+    }
+
+    // Fluffy 3D Cartoon Clouds
+    const clouds = [];
+    function createCloud(x, y, z, scale) {
+      const g = new THREE.Group();
+      const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+      [
+        [0, 0, 0, 2.2],
+        [1.8, -0.2, 0, 1.6],
+        [-1.8, -0.3, 0, 1.5],
+        [1.0, 1.0, 0, 1.5],
+        [-0.9, 0.9, 0, 1.4]
+      ].forEach(([sx, sy, sz, r]) => {
+        const sp = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), m);
+        sp.position.set(sx, sy, sz);
+        g.add(sp);
+      });
+      g.position.set(x, y, z);
+      g.scale.set(scale, scale * 0.7, scale * 0.8);
+      scene.add(g);
+      clouds.push({ el: g, baseX: x, speed: 0.35 + Math.random() * 0.25 });
+    }
+    createCloud(-35, 20, -30, 2.2);
+    createCloud(5, 22, -35, 2.5);
+    createCloud(45, 19, -28, 2.0);
+    createCloud(85, 21, -32, 2.4);
+
+    // ----------------------------------------------------
+    // 4. The 3D Yellow Cartoon School Bus
+    // ----------------------------------------------------
+    const busRoot = new THREE.Group();
+    scene.add(busRoot);
+
+    const busChassis = new THREE.Group();
+    busRoot.add(busChassis);
+
+    const busYellow = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.25, metalness: 0.1 });
+    const busWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+    const darkMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.25 });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, transparent: true, opacity: 0.75 });
+    const redLightMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xb91c1c, emissiveIntensity: 0.5 });
+
+    // Main Bus Body (length 9.5, height 3.2, width 3.6)
+    const bodyGeo = new THREE.BoxGeometry(9.5, 3.0, 3.6);
+    const bodyMesh = new THREE.Mesh(bodyGeo, busYellow);
+    bodyMesh.position.set(0, 2.2, 0);
+    bodyMesh.castShadow = true;
+    busChassis.add(bodyMesh);
+
+    // White Curved Roof
+    const roofGeo = new THREE.CylinderGeometry(1.9, 1.9, 9.6, 24, 1, false, 0, Math.PI);
+    roofGeo.rotateZ(Math.PI / 2);
+    const roofMesh = new THREE.Mesh(roofGeo, busWhite);
+    roofMesh.position.set(0, 3.7, 0);
+    roofMesh.scale.set(1, 0.45, 0.95);
+    busChassis.add(roofMesh);
+
+    // Front Hood Extension (Engine snout)
+    const hoodMesh = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.8, 3.4), busYellow);
+    hoodMesh.position.set(5.5, 1.6, 0);
+    hoodMesh.castShadow = true;
+    busChassis.add(hoodMesh);
+
+    // Front Chrome Grille
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 2.6), chromeMat);
+    grille.position.set(6.55, 1.5, 0);
+    busChassis.add(grille);
+
+    // Front Cute Headlight Eyes
+    const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+    const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 });
+
+    for (let ez of [-1.2, 1.2]) {
+      const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.25, 24), eyeWhiteMat);
+      eye.rotateZ(Math.PI / 2);
+      eye.position.set(6.55, 1.9, ez);
+      busChassis.add(eye);
+
+      const pupil = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.28, 16), eyePupilMat);
+      pupil.rotateZ(Math.PI / 2);
+      pupil.position.set(6.56, 1.9, ez);
+      busChassis.add(pupil);
+    }
+
+    // Front Windshield Glass
+    const windshield = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 1.6), glassMat);
+    windshield.rotateY(Math.PI / 2);
+    windshield.position.set(4.76, 2.9, 0);
+    busChassis.add(windshield);
+
+    // Side Windows (along both sides)
+    for (let wx = -3.2; wx <= 3.2; wx += 1.8) {
+      // Right side windows
+      const winR = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.2), glassMat);
+      winR.position.set(wx, 2.8, 1.81);
+      busChassis.add(winR);
+
+      // Left side windows
+      const winL = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.2), glassMat);
+      winL.rotateY(Math.PI);
+      winL.position.set(wx, 2.8, -1.81);
+      busChassis.add(winL);
+    }
+
+    // Front Windshield Wipers (Dual Wipers on Windshield)
+    const wiperGroup1 = new THREE.Group();
+    const wiperGroup2 = new THREE.Group();
+    wiperGroup1.position.set(4.78, 2.3, 0.8);
+    wiperGroup2.position.set(4.78, 2.3, -0.8);
+
+    const wiperBladeGeo = new THREE.BoxGeometry(0.04, 1.2, 0.06);
+    const blade1 = new THREE.Mesh(wiperBladeGeo, darkMetal);
+    blade1.position.y = 0.6;
+    wiperGroup1.add(blade1);
+
+    const blade2 = new THREE.Mesh(wiperBladeGeo, darkMetal);
+    blade2.position.y = 0.6;
+    wiperGroup2.add(blade2);
+
+    busChassis.add(wiperGroup1);
+    busChassis.add(wiperGroup2);
+
+    // Passenger Bi-Fold Door (on right side, near front: x=4.0, z=1.81)
+    const doorGroup = new THREE.Group();
+    doorGroup.position.set(3.8, 1.9, 1.81);
+    const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.4, 0.1), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 }));
+    doorGroup.add(doorLeaf);
+    busChassis.add(doorGroup);
+
+    // Cute Passengers (Heads bobbing inside windows)
+    const passengers = [];
+    const skinColors = [0xfbcfe8, 0xfde047, 0xfcd34d, 0xfecdd3];
+    for (let i = 0; i < 4; i++) {
+      const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), new THREE.MeshStandardMaterial({ color: skinColors[i % skinColors.length], roughness: 0.4 }));
+      const px = -2.8 + i * 1.8;
+      pHead.position.set(px, 2.8, 1.2);
+      busChassis.add(pHead);
+      passengers.push(pHead);
+    }
+
+    // 4 Big Cartoon Bus Wheels
+    const wheels = [];
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+    const hubMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
+
+    function createBusWheel(x, z) {
+      const wGroup = new THREE.Group();
+      const r = 0.9;
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.65, 32), wheelMat);
+      tire.rotateX(Math.PI / 2);
+      tire.castShadow = true;
+      wGroup.add(tire);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.72, 16), hubMat);
+      hub.rotateX(Math.PI / 2);
+      wGroup.add(hub);
+
+      wGroup.position.set(x, r - 0.1, z);
+      busRoot.add(wGroup);
+      wheels.push(wGroup);
+      return wGroup;
+    }
+
+    createBusWheel(3.2, 1.85);   // Front Right
+    createBusWheel(3.2, -1.85);  // Front Left
+    createBusWheel(-3.2, 1.85);  // Rear Right
+    createBusWheel(-3.2, -1.85); // Rear Left
+
+    // Horn Soundwave Rings (bursting from front grille)
+    const soundRings = [];
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, wireframe: true, transparent: true, opacity: 0.8 });
+    for (let i = 0; i < 5; i++) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.35, 16), ringMat);
+      ring.rotateY(Math.PI / 2);
+      ring.position.set(6.8, 1.5, 0);
+      ring.visible = false;
+      scene.add(ring);
+      soundRings.push(ring);
+    }
+
+    // Celebration Balloons for Outro
+    const balloons = [];
+    const balloonColors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899];
+    for (let i = 0; i < 20; i++) {
+      const bMat = new THREE.MeshStandardMaterial({ color: balloonColors[i % balloonColors.length], roughness: 0.25 });
+      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), bMat);
+      bMesh.scale.set(1, 1.25, 1);
+      bMesh.visible = false;
+      scene.add(bMesh);
+      balloons.push({
+        mesh: bMesh,
+        x: -25 + i * 3.0,
+        z: -10 + (i % 4) * 5,
+        speed: 2.2 + Math.random() * 1.5,
+        seed: Math.random() * 10
+      });
+    }
+
+    // ----------------------------------------------------
+    // 5. Timeline & Deterministic Clock Engine
+    // ----------------------------------------------------
+    const TIMINGS = window.BUS_TIMINGS || { total_duration: 52.68, verses: [] };
+    const actionBadge = document.getElementById('action-badge');
+    const actionIcon = document.getElementById('action-icon');
+    const actionLabel = document.getElementById('action-label');
+    const subtitleEl = document.getElementById('subtitles');
+
+    window.advanceClock = function(t) {
+      // 1. Bus Forward Travel (Smooth continuous rolling along road)
+      const busSpeed = 2.4; // world units per sec
+      const currentBusX = (t * busSpeed) % 180 - 60;
+      busRoot.position.x = currentBusX;
+
+      // Suspension Bounce on Beat (116 BPM)
+      const bounce = Math.abs(Math.sin(t * Math.PI * 3.86)) * 0.12;
+      busChassis.position.y = bounce;
+
+      // 2. Rotate Wheels smoothly with forward speed
+      const wheelAngle = -(t * busSpeed / 0.9) * Math.PI * 2;
+      wheels.forEach(w => { w.rotation.z = wheelAngle; });
+
+      // 3. Clouds Drifting in sky
+      clouds.forEach(c => {
+        c.el.position.x = (c.baseX + t * c.speed) % 180 - 60;
+      });
+
+      // 4. Determine Current Verse & Stage Action
+      const curVerse = TIMINGS.verses ? TIMINGS.verses.find(v => t >= v.start && t < v.end) : null;
+
+      if (curVerse) {
+        subtitleEl.textContent = curVerse.subtitle;
+        actionBadge.style.opacity = '1';
+
+        if (curVerse.action === 'wheels') {
+          actionIcon.textContent = '🎡';
+          actionLabel.textContent = 'Round and Round!';
+          // Camera Shot 1: Low angle tracking alongside wheels
+          camera.position.set(currentBusX - 2.0, 1.8, 7.5);
+          camera.lookAt(currentBusX + 1.5, 1.5, 0);
+
+        } else if (curVerse.action === 'wipers') {
+          actionIcon.textContent = '🌧️';
+          actionLabel.textContent = 'Swish, Swish, Swish!';
+          // Oscillate Wipers
+          const wiperAngle = Math.sin(t * 14.0) * 0.75;
+          wiperGroup1.rotation.x = wiperAngle;
+          wiperGroup2.rotation.x = wiperAngle;
+
+          // Camera Shot 2: Windshield Close-Up Tracking
+          camera.position.set(currentBusX + 11.0, 3.8, 3.2);
+          camera.lookAt(currentBusX + 4.5, 2.8, 0);
+
+        } else if (curVerse.action === 'horn') {
+          actionIcon.textContent = '📢';
+          actionLabel.textContent = 'Beep, Beep, Beep!';
+          // Animate Soundwave Rings
+          soundRings.forEach((ring, idx) => {
+            const cycle = (t * 4.0 + idx * 0.3) % 1.0;
+            ring.visible = true;
+            ring.position.set(currentBusX + 6.8 + cycle * 3.0, 1.5 + bounce, 0);
+            const s = 1.0 + cycle * 4.0;
+            ring.scale.set(s, s, s);
+            ring.material.opacity = 1.0 - cycle;
+          });
+
+          // Camera Shot 3: Hero 3/4 Front Angle
+          camera.position.set(currentBusX + 13.0, 2.5, 8.0);
+          camera.lookAt(currentBusX + 4.0, 2.2, 0);
+
+        } else if (curVerse.action === 'doors') {
+          actionIcon.textContent = '🚪';
+          actionLabel.textContent = 'Open and Shut!';
+          // Swing door open and shut
+          const doorSwing = Math.abs(Math.sin(t * 3.5)) * 1.4;
+          doorGroup.rotation.y = doorSwing;
+
+          // Camera Shot 4: Curb-side Door View
+          camera.position.set(currentBusX + 5.0, 2.2, 5.8);
+          camera.lookAt(currentBusX + 3.0, 2.0, 1.8);
+
+        } else if (curVerse.action === 'people') {
+          actionIcon.textContent = '👥';
+          actionLabel.textContent = 'Up and Down!';
+          // Passengers Bobbing Heads
+          passengers.forEach((p, idx) => {
+            const pBob = Math.sin(t * 7.0 + idx * 0.8) * 0.28;
+            p.position.y = 2.8 + pBob;
+          });
+
+          // Camera Shot 5: Passenger Side Window Tracking
+          camera.position.set(currentBusX - 1.0, 3.2, 6.2);
+          camera.lookAt(currentBusX - 1.0, 2.8, 0);
+        }
+      } else {
+        // Outro Celebration (t > 50s)
+        subtitleEl.textContent = '🎉 All Through the Town! 🎉';
+        actionBadge.style.opacity = '0';
+
+        // Camera Shot 6: High Panoramic Pullback
+        const outroT = Math.min((t - 50.0) / 3.0, 1.0);
+        camera.position.set(currentBusX - 8.0, 10.0 + outroT * 4.0, 26.0 + outroT * 6.0);
+        camera.lookAt(currentBusX + 2.0, 2.0, 0);
+
+        // Float balloons
+        balloons.forEach(b => {
+          b.mesh.visible = true;
+          const dt = Math.max(0, t - 48.0);
+          b.mesh.position.set(currentBusX + b.x, dt * b.speed, b.z);
+        });
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    // Initialize to t=0
+    window.advanceClock(0);
+
+    // ----------------------------------------------------
+    // 6. Interactive Browser Playback
+    // ----------------------------------------------------
+    const audioEl = document.getElementById('audioTrack');
+    const playBtn = document.getElementById('play-btn');
+    let isPlaying = false;
+    let animId = null;
+
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        audioEl.pause();
+        cancelAnimationFrame(animId);
+        playBtn.textContent = '▶ Resume Song';
+        isPlaying = false;
+      } else {
+        audioEl.play();
+        playBtn.textContent = '⏸ Pause';
+        isPlaying = true;
+        animate();
+      }
+    });
+
+    audioEl.addEventListener('ended', () => {
+      isPlaying = false;
+      playBtn.textContent = '🔄 Replay';
+    });
+
+    function animate() {
+      if (!isPlaying) return;
+      const t = audioEl.currentTime;
+      window.advanceClock(t);
+      animId = requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>

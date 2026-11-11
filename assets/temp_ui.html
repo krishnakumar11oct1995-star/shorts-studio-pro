@@ -1,0 +1,189 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=1080, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Roboto', 'Noto Sans Telugu', sans-serif;
+                background-color: transparent;
+                color: #e9edef;
+                margin: 0;
+                padding: 0;
+                width: 1080px;
+            }
+            .status-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                height: 70px;
+                background-color: #0b141a;
+                padding: 0 40px;
+                font-size: 32px;
+                font-weight: 500;
+                color: rgba(255, 255, 255, 0.9);
+            }
+            .status-right {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            .status-right svg {
+                width: 38px;
+                height: 38px;
+                fill: currentColor;
+            }
+            .header {
+                display: flex;
+                align-items: center;
+                background-color: #0b141a;
+                height: 140px;
+                padding: 0 16px;
+                box-sizing: border-box;
+            }
+            .back-btn {
+                display: flex;
+                align-items: center;
+                margin-right: 8px;
+            }
+            .avatar {
+                width: 90px;
+                height: 90px;
+                border-radius: 50%;
+                background-color: #6c757d;
+                margin-right: 24px;
+                object-fit: cover;
+            }
+            .contact-info {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .contact-name {
+                font-size: 44px;
+                font-weight: 500;
+                line-height: 1.2;
+                color: #e9edef;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                max-width: 500px;
+            }
+            .status {
+                font-size: 28px;
+                color: #8696a0;
+                line-height: 1.2;
+            }
+            .header-icons {
+                display: flex;
+                align-items: center;
+                gap: 48px;
+                color: #e9edef;
+                margin-right: 16px;
+            }
+            
+            .footer {
+                display: flex;
+                align-items: flex-end;
+                background-color: transparent;
+                padding: 16px;
+                box-sizing: border-box;
+                width: 1080px;
+            }
+            .input-pill {
+                flex-grow: 1;
+                background-color: #1f2c34;
+                border-radius: 48px;
+                display: flex;
+                align-items: center;
+                padding: 16px 24px;
+                margin-right: 16px;
+                min-height: 100px;
+            }
+            .pill-icons {
+                display: flex;
+                align-items: center;
+                gap: 40px;
+                color: #8696a0;
+            }
+            .message-text {
+                flex-grow: 1;
+                font-size: 38px;
+                color: #8696a0;
+                margin-left: 24px;
+                margin-right: 24px;
+            }
+            .mic-btn {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background-color: #00a884;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #111b21;
+                flex-shrink: 0;
+            }
+            
+            svg {
+                width: 52px;
+                height: 52px;
+                fill: currentColor;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- HEADER ID for screenshot -->
+        <div id="wa-header-container">
+            <div class="status-bar">
+                <div class="time">11:42</div>
+                <div class="status-right">
+                    <!-- Wifi -->
+                    <svg viewBox="0 0 24 24"><path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"/></svg>
+                    <!-- Signal -->
+                    <svg viewBox="0 0 24 24"><path d="M2 22h20V2z"/></svg>
+                    <!-- Battery -->
+                    <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </div>
+            </div>
+            <div class="header">
+                <div class="back-btn">
+                    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </div>
+            <!-- The avatar will be rendered by PIL, so we just put a placeholder that matches bg -->
+            <div class="avatar" style="background-color: transparent;"></div>
+            <div class="contact-info">
+                <div class="contact-name" id="contact-name">Riya</div>
+                <div class="status" id="contact-status">online</div>
+            </div>
+            <div class="header-icons">
+                <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 16H5V8h10v8z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </div>
+        </div>
+        </div>
+        
+        <!-- FOOTER ID for screenshot -->
+        <div id="wa-footer" class="footer">
+            <div class="input-pill">
+                <div class="pill-icons">
+                    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S8.33 8 7.5 8 6 8.67 6 9.5 6.67 11 7.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H7.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                </div>
+                <div class="message-text">Message</div>
+                <div class="pill-icons">
+                    <svg viewBox="0 0 24 24" style="transform: rotate(45deg);"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>
+                </div>
+            </div>
+            <div class="mic-btn">
+                <svg style="width: 48px; height: 48px; fill: white;" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+            </div>
+        </div>
+    </body>
+    </html>
+    

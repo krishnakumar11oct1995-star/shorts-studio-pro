@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Alphabet Adventure - 3D ABC Song</title>
+  <script src="three.min.js"></script>
+  <script src="export/timings.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #0f172a;
+      overflow: hidden;
+      font-family: 'Fredoka One', 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    #viewport {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background: #7dd3fc;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+    canvas {
+      display: block;
+      width: 1920px;
+      height: 1080px;
+    }
+    /* Karaoke Subtitle Overlay */
+    #ui-overlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 60px;
+    }
+    .header-badge {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      padding: 14px 28px;
+      border-radius: 50px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      border: 3px solid #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-badge span.icon { font-size: 28px; }
+    .header-badge span.title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0369a1;
+      letter-spacing: 0.5px;
+    }
+
+    /* Big Center Letter Pop Popup */
+    #big-pop-letter {
+      position: absolute;
+      top: 140px;
+      right: 80px;
+      width: 160px;
+      height: 160px;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      border: 6px solid #ffffff;
+      border-radius: 40px;
+      box-shadow: 0 20px 40px rgba(239, 68, 68, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 110px;
+      font-weight: 900;
+      opacity: 0;
+      transform: scale(0.3) rotate(-15deg);
+      transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #big-pop-letter.show {
+      opacity: 1;
+      transform: scale(1) rotate(5deg);
+    }
+
+    /* Bottom Karaoke Subtitle */
+    .subtitle-card {
+      align-self: center;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      padding: 20px 50px;
+      border-radius: 40px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      border: 4px solid #facc15;
+      text-align: center;
+      max-width: 1500px;
+      transition: all 0.2s ease;
+    }
+    .subtitle-text {
+      font-size: 48px;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: 2px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .letter-token {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 16px;
+      transition: all 0.15s ease;
+    }
+    .letter-token.active {
+      background: #facc15;
+      color: #b45309;
+      transform: scale(1.3) translateY(-6px);
+      box-shadow: 0 10px 20px rgba(250, 204, 21, 0.5);
+    }
+
+    /* Live Controls Button (for browser preview) */
+    #play-btn {
+      position: absolute;
+      bottom: 40px;
+      right: 60px;
+      pointer-events: auto;
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 16px 34px;
+      font-size: 24px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      transition: transform 0.15s, background 0.15s;
+    }
+    #play-btn:hover {
+      background: #16a34a;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="ui-overlay">
+      <div class="header-badge">
+        <span class="icon">🚂</span>
+        <span class="title">Alphabet Adventure · ABC Song</span>
+      </div>
+
+      <div id="big-pop-letter">A</div>
+
+      <div class="subtitle-card">
+        <div id="subtitles" class="subtitle-text">
+          <span>Loading ABC Song...</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="play-btn">▶ Play Song</button>
+    <audio id="audioTrack" src="export/abc_song_master.mp3" preload="auto"></audio>
+  </div>
+
+  <script>
+    // ----------------------------------------------------
+    // 1. Scene, Camera, Renderer Setup
+    // ----------------------------------------------------
+    const viewport = document.getElementById('viewport');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x7dd3fc);
+    scene.fog = new THREE.FogExp2(0xbae6fd, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(42, 1920 / 1080, 0.1, 1000);
+    camera.position.set(12, 6, 24);
+    camera.lookAt(6, 2, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(1920, 1080);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    viewport.insertBefore(renderer.domElement, viewport.firstChild);
+
+    // ----------------------------------------------------
+    // 2. Lighting (Warm Pixar/CoComelon Aesthetic)
+    // ----------------------------------------------------
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x38bdf8, 0.75);
+    scene.add(hemiLight);
+
+    const sun = new THREE.DirectionalLight(0xfffaed, 1.4);
+    sun.position.set(25, 40, 20);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 120;
+    sun.shadow.camera.left = -35;
+    sun.shadow.camera.right = 35;
+    sun.shadow.camera.top = 35;
+    sun.shadow.camera.bottom = -35;
+    sun.shadow.bias = -0.0004;
+    scene.add(sun);
+
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.45);
+    fillLight.position.set(-20, 15, -15);
+    scene.add(fillLight);
+
+    // ----------------------------------------------------
+    // 3. Environment: Rolling Green Hills & Fluffy Clouds
+    // ----------------------------------------------------
+    const groundGeo = new THREE.PlaneGeometry(240, 120, 96, 64);
+    const pos = groundGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      // Gentle wavy hills
+      const z = Math.sin(x * 0.05) * 2.2 + Math.cos(y * 0.07) * 1.8 - 0.8;
+      pos.setZ(i, z);
+    }
+    groundGeo.computeVertexNormals();
+
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x4ade80,
+      roughness: 0.8,
+      metalness: 0.05
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1.2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Distant background rolling mounds
+    function createBgHill(x, y, z, sx, sy, sz, color) {
+      const g = new THREE.SphereGeometry(30, 32, 16);
+      const m = new THREE.MeshStandardMaterial({ color: color, roughness: 0.95 });
+      const mesh = new THREE.Mesh(g, m);
+      mesh.position.set(x, y, z);
+      mesh.scale.set(sx, sy, sz);
+      scene.add(mesh);
+    }
+    createBgHill(-30, -22, -40, 1.8, 0.8, 1, 0x22c55e);
+    createBgHill(20, -20, -45, 2.2, 0.9, 1.2, 0x16a34a);
+    createBgHill(70, -22, -38, 1.9, 0.85, 1, 0x22c55e);
+
+    // Fluffy 3D Puffy Cartoon Clouds
+    const clouds = [];
+    function createCloud(x, y, z, scale) {
+      const cloud = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+      const spheres = [
+        [0, 0, 0, 2.0],
+        [1.6, -0.2, 0, 1.5],
+        [-1.6, -0.3, 0, 1.4],
+        [0.9, 0.9, 0, 1.4],
+        [-0.8, 0.8, 0, 1.3]
+      ];
+      spheres.forEach(([sx, sy, sz, r]) => {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), mat);
+        m.position.set(sx, sy, sz);
+        cloud.add(m);
+      });
+      cloud.position.set(x, y, z);
+      cloud.scale.set(scale, scale * 0.7, scale * 0.8);
+      scene.add(cloud);
+      clouds.push({ el: cloud, baseX: x, speed: 0.4 + Math.random() * 0.3 });
+    }
+    createCloud(-25, 16, -20, 1.8);
+    createCloud(0, 18, -25, 2.2);
+    createCloud(28, 15, -22, 1.6);
+    createCloud(55, 17, -26, 2.0);
+
+    // Cute stylized trees along the track
+    function createTree(x, z) {
+      const tree = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.9 });
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 2, 8), trunkMat);
+      trunk.position.y = 0;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const foliageMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
+      const puff1 = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), foliageMat);
+      puff1.position.set(0, 1.6, 0);
+      puff1.castShadow = true;
+      tree.add(puff1);
+
+      const puff2 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), new THREE.MeshStandardMaterial({ color: 0x22c55e }));
+      puff2.position.set(0.4, 2.1, 0.2);
+      tree.add(puff2);
+
+      tree.position.set(x, -0.2, z);
+      scene.add(tree);
+    }
+    const treePositions = [-18, -12, -4, 4, 12, 20, 28, 36, 44, 52];
+    treePositions.forEach(x => {
+      createTree(x, -6 + Math.sin(x) * 1.5);
+      if (Math.random() > 0.4) createTree(x + 2, 7 + Math.cos(x) * 1.5);
+    });
+
+    // ----------------------------------------------------
+    // 4. Railway Track
+    // ----------------------------------------------------
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+    const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+
+    const railGeo = new THREE.BoxGeometry(200, 0.15, 0.12);
+    const r1 = new THREE.Mesh(railGeo, railMat);
+    r1.position.set(0, -0.4, 0.8);
+    scene.add(r1);
+
+    const r2 = new THREE.Mesh(railGeo, railMat);
+    r2.position.set(0, -0.4, -0.8);
+    scene.add(r2);
+
+    const sleeperGeo = new THREE.BoxGeometry(0.35, 0.14, 2.3);
+    for (let x = -80; x <= 80; x += 0.8) {
+      const sl = new THREE.Mesh(sleeperGeo, sleeperMat);
+      sl.position.set(x, -0.5, 0);
+      sl.receiveShadow = true;
+      scene.add(sl);
+    }
+
+    // ----------------------------------------------------
+    // 5. The Train & Bogies Setup
+    // ----------------------------------------------------
+    const trainGroup = new THREE.Group();
+    scene.add(trainGroup);
+
+    const darkMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
+    const goldMetal = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+    const wheelHubMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.9, roughness: 0.2 });
+
+    const wheelsList = [];
+
+    function createWheel(r, x, z) {
+      const wGroup = new THREE.Group();
+      const wGeo = new THREE.CylinderGeometry(r, r, 0.14, 24);
+      wGeo.rotateX(Math.PI / 2);
+      const m = new THREE.Mesh(wGeo, wheelMat);
+      m.castShadow = true;
+      wGroup.add(m);
+
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r * 0.45, 0.18, 16), wheelHubMat);
+      hub.rotateX(Math.PI / 2);
+      wGroup.add(hub);
+
+      // Cute colored spokes
+      for (let a = 0; a < 4; a++) {
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(r * 1.6, 0.06, 0.16), goldMetal);
+        spoke.rotation.z = (a * Math.PI) / 4;
+        wGroup.add(spoke);
+      }
+
+      wGroup.position.set(x, -0.5 + r, z);
+      wheelsList.push(wGroup);
+      return wGroup;
+    }
+
+    // A) Engine (Locomotive) - Chunky Cartoon Red & Gold
+    const engineGroup = new THREE.Group();
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3, metalness: 0.1 });
+    const blueMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3, metalness: 0.1 });
+
+    // Boiler cylinder
+    const boilerGeo = new THREE.CylinderGeometry(0.9, 0.9, 3.2, 32);
+    boilerGeo.rotateZ(Math.PI / 2);
+    const boiler = new THREE.Mesh(boilerGeo, redMat);
+    boiler.position.set(0.6, 0.6, 0);
+    boiler.castShadow = true;
+    engineGroup.add(boiler);
+
+    // Front boiler cap
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 16), goldMetal);
+    cap.scale.set(0.4, 1, 1);
+    cap.position.set(2.2, 0.6, 0);
+    engineGroup.add(cap);
+
+    // Cabin
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.2, 1.8), blueMat);
+    cabin.position.set(-1.2, 1.0, 0);
+    cabin.castShadow = true;
+    engineGroup.add(cabin);
+
+    // Cabin roof curved
+    const roof = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 2.2, 24, 1, false, 0, Math.PI), goldMetal);
+    roof.rotateZ(Math.PI / 2);
+    roof.position.set(-1.2, 2.1, 0);
+    engineGroup.add(roof);
+
+    // Smokestack
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.22, 1.0, 16), darkMetal);
+    stack.position.set(1.4, 1.8, 0);
+    stack.castShadow = true;
+    engineGroup.add(stack);
+
+    // Cowcatcher grill
+    const cow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.0, 4), goldMetal);
+    cow.rotateZ(-Math.PI / 2);
+    cow.scale.set(0.8, 0.8, 1.5);
+    cow.position.set(2.5, -0.1, 0);
+    engineGroup.add(cow);
+
+    // Engine wheels
+    engineGroup.add(createWheel(0.65, -1.2, 0.95));
+    engineGroup.add(createWheel(0.65, -1.2, -0.95));
+    engineGroup.add(createWheel(0.5, 0.3, 0.95));
+    engineGroup.add(createWheel(0.5, 0.3, -0.95));
+    engineGroup.add(createWheel(0.5, 1.6, 0.95));
+    engineGroup.add(createWheel(0.5, 1.6, -0.95));
+
+    engineGroup.position.x = 8.5; // Lead position
+    trainGroup.add(engineGroup);
+
+    // Steam puffs from smokestack
+    const steamPuffs = [];
+    const steamMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, transparent: true, opacity: 0.8 });
+    for (let i = 0; i < 8; i++) {
+      const p = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), steamMat);
+      p.visible = false;
+      scene.add(p);
+      steamPuffs.push(p);
+    }
+
+    // B) Bogies (Passenger Cars) 1 to 5
+    // Bogie colors: Yellow, Sky Blue, Lime Green, Orange, Purple
+    const bogieColors = [0xfacc15, 0x38bdf8, 0x4ade80, 0xfb923c, 0xc084fc];
+    const bogieCars = [];
+
+    for (let c = 0; c < 5; c++) {
+      const carGroup = new THREE.Group();
+      const carMat = new THREE.MeshStandardMaterial({ color: bogieColors[c], roughness: 0.3, metalness: 0.1 });
+
+      // Car body
+      const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.5, 1.7), carMat);
+      body.position.set(0, 0.6, 0);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      carGroup.add(body);
+
+      // Chassis base
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.2, 1.8), darkMetal);
+      chassis.position.set(0, -0.15, 0);
+      carGroup.add(chassis);
+
+      // Golden roof top
+      const topRoof = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.2, 1.8), goldMetal);
+      topRoof.position.set(0, 1.4, 0);
+      carGroup.add(topRoof);
+
+      // Wheels
+      carGroup.add(createWheel(0.45, -1.4, 0.95));
+      carGroup.add(createWheel(0.45, -1.4, -0.95));
+      carGroup.add(createWheel(0.45, 1.4, 0.95));
+      carGroup.add(createWheel(0.45, 1.4, -0.95));
+
+      // Car Coupler
+      const coupler = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 8), darkMetal);
+      coupler.rotateZ(Math.PI / 2);
+      coupler.position.set(2.4, -0.15, 0);
+      carGroup.add(coupler);
+
+      // Position: Engine is at +8.5; Cars trail at 4.0, -1.0, -6.0, -11.0, -16.0
+      const posX = 4.0 - c * 5.0;
+      carGroup.position.x = posX;
+      trainGroup.add(carGroup);
+      bogieCars.push({ el: carGroup, xOffset: posX });
+    }
+
+    // ----------------------------------------------------
+    // 6. The 26 Alphabet 3D Blocks (A to Z)
+    // ----------------------------------------------------
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const letterBlocks = {};
+    const letterColors = [
+      0xef4444, 0xf97316, 0xf59e0b, 0x10b981, 0x06b6d4, 0x3b82f6, 0x8b5cf6, 0xec4899,
+      0xef4444, 0xf97316, 0xf59e0b, 0x10b981, 0x06b6d4, 0x3b82f6, 0x8b5cf6, 0xec4899,
+      0xef4444, 0xf97316, 0xf59e0b, 0x10b981, 0x06b6d4, 0x3b82f6, 0x8b5cf6, 0xec4899,
+      0xf59e0b, 0x10b981
+    ];
+
+    // Helper to generate a crisp 2D canvas texture with rounded border and bold letter
+    function createLetterTexture(char, bgHex) {
+      const cvs = document.createElement('canvas');
+      cvs.width = 256;
+      cvs.height = 256;
+      const ctx = cvs.getContext('2d');
+
+      // Rounded rect background
+      ctx.fillStyle = bgHex;
+      ctx.beginPath();
+      ctx.roundRect(10, 10, 236, 236, 40);
+      ctx.fill();
+
+      // Golden inner border
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      // Bold text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 160px "Comic Sans MS", "Arial Rounded MT Bold", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 4;
+      ctx.shadowOffsetY = 6;
+      ctx.fillText(char, 128, 134);
+
+      return new THREE.CanvasTexture(cvs);
+    }
+
+    // Place letters across the 5 bogies:
+    // Car 0 (Bogie 1): A, B, C, D, E
+    // Car 1 (Bogie 2): F, G, H, I, J
+    // Car 2 (Bogie 3): K, L, M, N, O
+    // Car 3 (Bogie 4): P, Q, R, S, T
+    // Car 4 (Bogie 5): U, V, W, X, Y, Z
+    const carLetterGroups = [
+      ["A", "B", "C", "D", "E"],
+      ["F", "G", "H", "I", "J"],
+      ["K", "L", "M", "N", "O"],
+      ["P", "Q", "R", "S", "T"],
+      ["U", "V", "W", "X", "Y", "Z"]
+    ];
+
+    const blockGeo = new THREE.BoxGeometry(0.72, 0.72, 0.72);
+
+    carLetterGroups.forEach((group, carIdx) => {
+      const carGroup = bogieCars[carIdx].el;
+      const n = group.length;
+      const spacing = 3.4 / Math.max(n - 1, 1);
+
+      group.forEach((char, idx) => {
+        const charIdx = letters.indexOf(char);
+        const colHex = '#' + letterColors[charIdx].toString(16).padStart(6, '0');
+        const tex = createLetterTexture(char, colHex);
+
+        // Box material: front and back show the letter
+        const sideMat = new THREE.MeshStandardMaterial({ color: letterColors[charIdx], roughness: 0.25, metalness: 0.1 });
+        const faceMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.25 });
+        const mats = [sideMat, sideMat, sideMat, sideMat, faceMat, faceMat];
+
+        const mesh = new THREE.Mesh(blockGeo, mats);
+        mesh.castShadow = true;
+
+        // Spread along top of car
+        const relX = -1.7 + idx * spacing;
+        const relY = 1.88;
+        const relZ = 0;
+        mesh.position.set(relX, relY, relZ);
+        carGroup.add(mesh);
+
+        letterBlocks[char] = {
+          mesh: mesh,
+          carIdx: carIdx,
+          baseY: relY,
+          relX: relX,
+          relZ: relZ,
+          popTime: window.ABC_TIMINGS ? window.ABC_TIMINGS.letters[char] : 1.0,
+          colorHex: colHex
+        };
+      });
+    });
+
+    // ----------------------------------------------------
+    // 7. Sparkle Star Particles for Letter Pops
+    // ----------------------------------------------------
+    const starPuffGroup = new THREE.Group();
+    scene.add(starPuffGroup);
+
+    const starGeo = new THREE.OctahedronGeometry(0.18, 0);
+    const starMat = new THREE.MeshStandardMaterial({ color: 0xfde047, emissive: 0xf59e0b, emissiveIntensity: 0.6, roughness: 0.2 });
+    const starPool = [];
+    for (let i = 0; i < 40; i++) {
+      const s = new THREE.Mesh(starGeo, starMat);
+      s.visible = false;
+      starPuffGroup.add(s);
+      starPool.push(s);
+    }
+
+    // ----------------------------------------------------
+    // 8. Celebration Balloons (for Outro)
+    // ----------------------------------------------------
+    const balloonGroup = new THREE.Group();
+    scene.add(balloonGroup);
+    const balloons = [];
+    const balloonColors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899];
+
+    for (let i = 0; i < 18; i++) {
+      const bColor = balloonColors[i % balloonColors.length];
+      const bMat = new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.2, metalness: 0.1 });
+      const bMesh = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 16), bMat);
+      bMesh.scale.set(1, 1.25, 1);
+
+      // Knot
+      const knot = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.2, 8), bMat);
+      knot.position.y = -1.15;
+      knot.rotateX(Math.PI);
+      bMesh.add(knot);
+
+      bMesh.visible = false;
+      balloonGroup.add(bMesh);
+      balloons.push({
+        mesh: bMesh,
+        x: -20 + i * 2.8 + Math.random() * 2,
+        z: -12 + (i % 5) * 5,
+        speed: 2.2 + Math.random() * 1.5,
+        swaySpeed: 1.5 + Math.random(),
+        seed: Math.random() * 10
+      });
+    }
+
+    // ----------------------------------------------------
+    // 9. Deterministic Timeline & Clock Engine
+    // ----------------------------------------------------
+    const TIMINGS = window.ABC_TIMINGS || {
+      total_duration: 29.04,
+      letters: {},
+      verses: []
+    };
+
+    const bigPopEl = document.getElementById('big-pop-letter');
+    const subtitleEl = document.getElementById('subtitles');
+
+    let lastActiveVerseId = null;
+    let lastActiveLetter = null;
+
+    window.advanceClock = function(t) {
+      // A) Train Motion along track: smooth continuous rolling
+      const trainSpeed = 1.4; // world units per sec
+      const currentTrainX = (t * trainSpeed) % 80 - 25;
+      trainGroup.position.x = currentTrainX;
+
+      // Rotate wheels smoothly with forward travel
+      const wheelAngle = -(t * trainSpeed / 0.5) * Math.PI * 2;
+      wheelsList.forEach(w => {
+        w.rotation.z = wheelAngle;
+      });
+
+      // Locomotive steam puffs
+      steamPuffs.forEach((puff, idx) => {
+        const puffCycle = ((t * 2.5 + idx * 0.4) % 2.0);
+        if (puffCycle < 1.4) {
+          puff.visible = true;
+          puff.position.set(trainGroup.position.x + engineGroup.position.x + 1.4 - puffCycle * 1.5, 1.8 + puffCycle * 1.2, (idx % 2 === 0 ? 0.2 : -0.2));
+          const s = 0.4 + puffCycle * 0.7;
+          puff.scale.set(s, s, s);
+          puff.material.opacity = Math.max(0, 0.8 - puffCycle * 0.55);
+        } else {
+          puff.visible = false;
+        }
+      });
+
+      // B) Letter Block Animations (Spring pop on sung timestamp)
+      let currentActiveChar = null;
+
+      letters.forEach(char => {
+        const b = letterBlocks[char];
+        if (!b) return;
+
+        const popT = b.popTime;
+        if (t < popT) {
+          // Has not popped yet: rests on train roof
+          b.mesh.position.y = b.baseY;
+          b.mesh.rotation.y = 0;
+          b.mesh.rotation.z = 0;
+          b.mesh.scale.set(1, 1, 1);
+        } else {
+          const dt = t - popT;
+          if (dt < 0.6) {
+            currentActiveChar = char;
+          }
+
+          if (dt < 1.0) {
+            // Active spring pop bounce
+            const jumpHeight = 1.6 * Math.sin(dt * Math.PI) * Math.exp(-dt * 1.5);
+            b.mesh.position.y = b.baseY + Math.max(0, jumpHeight);
+            b.mesh.rotation.y = dt * Math.PI * 4; // 2 full spins
+            b.mesh.rotation.z = Math.sin(dt * 8) * 0.3;
+            const popScale = 1.0 + 0.45 * Math.sin(dt * Math.PI);
+            b.mesh.scale.set(popScale, popScale, popScale);
+          } else {
+            // Popped: gentle happy float/bobbing
+            const bob = Math.sin(t * 3.5 + letters.indexOf(char) * 0.3) * 0.2;
+            b.mesh.position.y = b.baseY + 0.35 + bob;
+            b.mesh.rotation.y = Math.sin(t * 1.5) * 0.2;
+            b.mesh.rotation.z = Math.cos(t * 2.0) * 0.1;
+            b.mesh.scale.set(1.15, 1.15, 1.15);
+          }
+        }
+      });
+
+      // C) Big Corner Pop Letter Badge
+      if (currentActiveChar) {
+        if (lastActiveLetter !== currentActiveChar) {
+          bigPopEl.textContent = currentActiveChar;
+          bigPopEl.style.background = `linear-gradient(135deg, ${letterBlocks[currentActiveChar].colorHex}, #f59e0b)`;
+          bigPopEl.classList.add('show');
+          lastActiveLetter = currentActiveChar;
+        }
+      } else {
+        bigPopEl.classList.remove('show');
+      }
+
+      // D) Dynamic Camera Director Shots (5 Distinct Stanzas)
+      const absTrainX = trainGroup.position.x;
+
+      if (t < 5.5) {
+        // Shot 1 (0 to 5.5s): Wide side tracking shot on front engine & Bogie 1 (A-G)
+        camera.position.set(absTrainX + 6.0, 4.5, 20.0);
+        camera.lookAt(absTrainX + 2.0, 1.8, 0);
+      } else if (t < 11.5) {
+        // Shot 2 (5.5 to 11.5s): Low-angle push-in panning along Bogies 2 & 3 (H-P)
+        camera.position.set(absTrainX - 3.5, 3.8, 16.5);
+        camera.lookAt(absTrainX - 6.0, 2.2, 0);
+      } else if (t < 16.0) {
+        // Shot 3 (11.5 to 16.0s): Hero 3/4 front view looking up at Bogie 4 (Q-V)
+        camera.position.set(absTrainX - 10.0, 3.2, 14.0);
+        camera.lookAt(absTrainX - 12.5, 2.4, 0);
+      } else if (t < 19.5) {
+        // Shot 4 (16.0 to 19.5s): Close tracking rear bogie with final letters (W-Z)
+        camera.position.set(absTrainX - 15.0, 4.0, 15.0);
+        camera.lookAt(absTrainX - 17.5, 2.0, 0);
+      } else {
+        // Shot 5 (19.5 to 29.5s): Grand Celebration Panoramic Pull-Back
+        const outroT = Math.min((t - 19.5) / 9.0, 1.0);
+        const pullDist = 20.0 + outroT * 22.0;
+        const pullHeight = 6.0 + outroT * 10.0;
+        camera.position.set(absTrainX - 4.0, pullHeight, pullDist);
+        camera.lookAt(absTrainX - 5.0, 2.0, 0);
+
+        // Animate balloons floating into sky
+        balloons.forEach(b => {
+          b.mesh.visible = true;
+          const dt = t - 19.5;
+          b.mesh.position.set(b.x + Math.sin(dt * b.swaySpeed + b.seed) * 1.5, -2 + dt * b.speed, b.z);
+        });
+      }
+
+      // E) Clouds drifting in background
+      clouds.forEach(c => {
+        c.el.position.x = (c.baseX + t * c.speed) % 120 - 40;
+      });
+
+      // F) Subtitles & Karaoke Highlighting
+      if (TIMINGS.verses && TIMINGS.verses.length > 0) {
+        const curVerse = TIMINGS.verses.find(v => t >= v.start && t < v.end);
+        if (curVerse) {
+          if (lastActiveVerseId !== curVerse.id) {
+            // Render subtitle tokens
+            const tokens = curVerse.subtitle.split(/\s+/).filter(Boolean);
+            subtitleEl.innerHTML = tokens.map(tok => {
+              const isChar = letters.includes(tok);
+              return `<span class="letter-token ${isChar ? 'char-' + tok : ''}">${tok}</span>`;
+            }).join(' ');
+            lastActiveVerseId = curVerse.id;
+          }
+
+          // Highlight current letter if active
+          const activeTok = subtitleEl.querySelector(`.char-${currentActiveChar}`);
+          subtitleEl.querySelectorAll('.letter-token').forEach(el => el.classList.remove('active'));
+          if (activeTok) activeTok.classList.add('active');
+        } else if (t >= 28.0) {
+          subtitleEl.innerHTML = `<span style="color:#ef4444;font-size:52px">🎉 Great Job Singing Your ABCs! 🎉</span>`;
+        }
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    // Initialize to t=0
+    window.advanceClock(0);
+
+    // ----------------------------------------------------
+    // 10. Live Audio & Browser Playback Support
+    // ----------------------------------------------------
+    const audioEl = document.getElementById('audioTrack');
+    const playBtn = document.getElementById('play-btn');
+    let isPlaying = false;
+    let animId = null;
+
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        audioEl.pause();
+        cancelAnimationFrame(animId);
+        playBtn.textContent = '▶ Resume Song';
+        isPlaying = false;
+      } else {
+        audioEl.play();
+        playBtn.textContent = '⏸ Pause';
+        isPlaying = true;
+        animate();
+      }
+    });
+
+    audioEl.addEventListener('ended', () => {
+      isPlaying = false;
+      playBtn.textContent = '🔄 Replay';
+    });
+
+    function animate() {
+      if (!isPlaying) return;
+      const t = audioEl.currentTime;
+      window.advanceClock(t);
+      animId = requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{
+  "lecture": "Section 1, Lecture 1",
+  "topic": "Agentic AI & Autonomous Coding",
+  "titles": [
+    "Why AI Copilots Hit a Wall & The State Machine Solution | Agentic AI Tutorial",
+    "Beyond Copilot: Building Deterministic Autonomous Coding Agents from Scratch",
+    "Stop Context Stuffing: The Architecture of Autonomous Software Engineering"
+  ],
+  "primary_title": "Why AI Copilots Hit a Wall & The State Machine Solution | Agentic AI Tutorial",
+  "category": "Science & Technology / Education",
+  "language": "en",
+  "description": "Standard AI coding copilots operate in a blind forward pass: they predict tokens without a compiler, test runner, or execution feedback loop. In this lecture from Section 1 of 'Agentic AI & Autonomous Coding', we dissect the mathematical and architectural reasons copilots fail at complex software engineering—including attention dilution ('Lost in the Middle') and state drift—and reveal why closed-loop state machines are structurally required to achieve autonomous coding.\n\nFeaturing a live production case study of img2threejs (https://github.com/img2threejs/img2threejs): transforming 2D reference images into procedural Three.js TypeScript models via a staged code-sculpting pipeline, headless Playwright vision verification, and automated 100% deterministic gates.\n\n💻 SECTION 1 CODE & REPO:\n- Hands-on Lab & Agent Runtime: https://github.com/your-org/agentic-ai-specialization\n- Reference Architecture (img2threejs): https://github.com/img2threejs/img2threejs\n- Slides & Course Blueprint: See Section 1 Materials in Udemy / GitHub\n\n⏱️ TIMESTAMPS:\n0:00 - Introduction: The Copilot Ceiling\n0:15 - The Open-Loop Problem: Missing Compilers & Test Runners\n0:33 - Attention Dilution: The 'Lost in the Middle' Phenomenon\n0:50 - 4 Catastrophic Failures: Hallucination, Drift & Regressions\n1:04 - The Closed-Loop Agentic State Machine Solution (Case Study: img2threejs)\n1:22 - Deterministic Execution Loops & Section 1 Lab\n\n📌 KEY ARCHITECTURAL CONCEPTS COVERED:\n1. Open-Loop vs Closed-Loop: Why autoregressive next-token prediction cannot replace execution feedback.\n2. Attention Dilution (Lost in the Middle): Why dumping 200k tokens into context window collapses recall to < 25% in the middle 60%.\n3. The 4 Catastrophic Failure Modes: Tool argument hallucination, context amnesia/state drift, ungrounded filesystem assumptions, and silent interface regressions.\n4. Closed-Loop Agentic State Machine: Coupling foundation models to a deterministic runtime with automated 100% verification gates.\n5. Production Case Study (img2threejs): Procedural Three.js TypeScript code generation with headless Playwright vision loops.\n\n🔔 Subscribe for complete hands-on tutorials on Multi-Agent Systems, Model Context Protocol (MCP), and Autonomous Coding Engines!\n\n#AgenticAI #AutonomousCoding #SoftwareEngineering #img2threejs #ThreeJS #AIProgramming #MachineLearning #SystemArchitecture #Python #Playwright #Claude #DeepSeek #OpenAI",
+  "tags": [
+    "agentic ai",
+    "autonomous coding",
+    "img2threejs",
+    "three.js",
+    "threejs",
+    "ai copilot",
+    "state machine",
+    "lost in the middle",
+    "attention dilution",
+    "software engineering",
+    "deterministic runtime",
+    "mcp",
+    "model context protocol",
+    "multi agent systems",
+    "ai agents",
+    "python ai",
+    "coding agents",
+    "copilot alternative",
+    "playwright automation",
+    "anthropic claude",
+    "deepseek coder",
+    "langgraph",
+    "autogen",
+    "developer tutorial"
+  ],
+  "timestamps": [
+    { "time": "0:00", "title": "Introduction: The Copilot Ceiling" },
+    { "time": "0:15", "title": "The Open-Loop Problem: Missing Compilers & Test Runners" },
+    { "time": "0:33", "title": "Attention Dilution: The 'Lost in the Middle' Phenomenon" },
+    { "time": "0:50", "title": "4 Catastrophic Failures: Hallucination, Drift & Regressions" },
+    { "time": "1:04", "title": "The Closed-Loop Agentic State Machine Solution (Case Study: img2threejs)" },
+    { "time": "1:22", "title": "Deterministic Execution Loops & Section 1 Lab" }
+  ]
+}

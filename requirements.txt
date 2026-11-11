@@ -1,0 +1,8 @@
+edge-tts>=6.1.12
+pillow>=10.2.0
+gradio>=4.20.0
+requests>=2.31.0
+numpy>=1.26.0
+yt-dlp>=2024.3.10
+aiohttp>=3.9.0
+aiofiles>=23.2.1

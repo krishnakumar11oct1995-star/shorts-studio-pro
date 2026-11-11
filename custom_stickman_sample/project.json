@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "style": "B1",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "voice": {
+    "path": "narration.m4a",
+    "lead": 0,
+    "tail": 0,
+    "contains_sfx": false
+  },
+  "captions": [
+    {
+      "start": 0.1,
+      "end": 4.18,
+      "text": "Why do 90% of new YouTubers quit in their first month?"
+    },
+    {
+      "start": 4.19,
+      "end": 8.28,
+      "text": "Because they focus on expensive gear instead of a great hook."
+    },
+    {
+      "start": 8.29,
+      "end": 10.34,
+      "text": "The truth is simple."
+    },
+    {
+      "start": 10.35,
+      "end": 16.31,
+      "text": "A clear story and high retention beats a $3,000 camera every time."
+    },
+    {
+      "start": 16.32,
+      "end": 18.13,
+      "text": "Stop waiting."
+    },
+    {
+      "start": 18.14,
+      "end": 20.35,
+      "text": "Start creating today."
+    }
+  ],
+  "shots": [
+    {
+      "start": 0,
+      "end": 4.2,
+      "layers": [
+        {"type": "text", "text": "90% QUIT.", "x": 95, "y": 110, "size": 60, "bold": true, "color": "#EC4338"},
+        {"type": "text", "text": "IN MONTH ONE.", "x": 95, "y": 185, "size": 52, "bold": true},
+        {"type": "pose", "pose": 2, "x": 720, "y": 35, "w": 445},
+        {"type": "image", "path": "@b1/youtube-crayon.png", "x": 120, "y": 280, "w": 260},
+        {"type": "line", "points": [[110, 390], [390, 290]], "color": "#EC4338", "lineWidth": 6, "keys": [{"t": 0.5, "progress": 0}, {"t": 1.0, "progress": 1}]}
+      ]
+    },
+    {
+      "start": 4.2,
+      "end": 8.3,
+      "layers": [
+        {"type": "text", "text": "OBSESSED WITH GEAR.", "x": 95, "y": 110, "size": 54, "bold": true},
+        {"type": "pose", "pose": 1, "x": 70, "y": 45, "w": 435},
+        {"type": "image", "path": "@b1/camera-handdrawn.png", "x": 560, "y": 250, "w": 200, "keys": [{"t": 0, "angle": -0.06}, {"t": 0.5, "angle": 0.06}, {"t": 1.0, "angle": 0}]},
+        {"type": "text", "text": "$3,000 CAMERA", "x": 800, "y": 320, "size": 42, "bold": true, "color": "#EC4338"}
+      ]
+    },
+    {
+      "start": 8.3,
+      "end": 10.35,
+      "layers": [
+        {"type": "text", "text": "THE TRUTH IS SIMPLE.", "x": 95, "y": 120, "size": 56, "bold": true},
+        {"type": "pose", "pose": 0, "x": 680, "y": 25, "w": 460},
+        {"type": "image", "path": "@b1/idea-bulb-crayon.png", "x": 180, "y": 260, "w": 200, "keys": [{"t": 0, "y": 280}, {"t": 0.5, "y": 250}]}
+      ]
+    },
+    {
+      "start": 10.35,
+      "end": 16.32,
+      "layers": [
+        {"type": "text", "text": "HOOK + STORY BEATS GEAR.", "x": 95, "y": 110, "size": 52, "bold": true},
+        {"type": "pose", "pose": 1, "x": 720, "y": 35, "w": 445},
+        {"type": "image", "path": "@b1/idea-note-crayon.png", "x": 110, "y": 270, "w": 180},
+        {"type": "arrow", "x": 320, "y": 370, "w": 200, "keys": [{"t": 0, "progress": 0}, {"t": 0.6, "progress": 1}]},
+        {"type": "image", "path": "@b1/script-page-crayon.png", "x": 540, "y": 260, "w": 180}
+      ]
+    },
+    {
+      "start": 16.32,
+      "end": 20.4,
+      "layers": [
+        {"type": "text", "text": "STOP WAITING.", "x": 95, "y": 110, "size": 58, "bold": true},
+        {"type": "text", "text": "START CREATING.", "x": 95, "y": 185, "size": 58, "bold": true, "color": "#16a34a"},
+        {"type": "pose", "pose": 0, "x": 700, "y": 35, "w": 450},
+        {"type": "image", "path": "@b1/clapper-crayon.png", "x": 180, "y": 280, "w": 220, "keys": [{"t": 0, "angle": -0.1}, {"t": 0.4, "angle": 0.08}, {"t": 0.8, "angle": 0}]}
+      ]
+    }
+  ],
+  "sfx": []
+}
