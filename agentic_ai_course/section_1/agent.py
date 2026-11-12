@@ -64,6 +64,27 @@ TOOLS: List[Dict[str, Any]] = [
 ]
 
 # 2. DETERMINISTIC TOOL DISPATCHER
+WORKSPACE_ROOT = os.path.realpath(os.getcwd())
+
+
+def _resolve_in_workspace(path: str) -> str:
+    """Resolve path and ensure it stays inside the working directory."""
+    full = os.path.realpath(os.path.join(WORKSPACE_ROOT, path))
+    if os.path.commonpath([full, WORKSPACE_ROOT]) != WORKSPACE_ROOT:
+        raise PermissionError(f"Path '{path}' is outside the working directory.")
+    return full
+
+
+def _confirm_command(cmd: str) -> bool:
+    """Ask the human before running an LLM-proposed shell command (default: No)."""
+    print(f"\n[run_bash] The agent wants to run:\n    {cmd}")
+    try:
+        answer = input("Execute this command? [y/N]: ").strip().lower()
+    except EOFError:
+        return False
+    return answer in ("y", "yes")
+
+
 def dispatch_tool(name: str, args: Dict[str, Any]) -> str:
     """Safely executes the requested tool and returns truncated string output."""
     try:
@@ -76,7 +97,7 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> str:
                 return content[:6000] if len(content) > 6000 else content
 
         elif name == "write_file":
-            path = args["path"]
+            path = _resolve_in_workspace(args["path"])
             content = args["content"]
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
@@ -85,6 +106,8 @@ def dispatch_tool(name: str, args: Dict[str, Any]) -> str:
 
         elif name == "run_bash":
             cmd = args["command"]
+            if not _confirm_command(cmd):
+                return "Error: Command was not approved by the user and was not executed."
             res = subprocess.run(
                 cmd,
                 shell=True,

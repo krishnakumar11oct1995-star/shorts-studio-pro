@@ -1,4 +1,6 @@
 import streamlit as st
+import subprocess
+import sys
 import os
 
 st.set_page_config(page_title="Shorts Studio Pro", page_icon="🎬", layout="wide")
@@ -221,16 +223,23 @@ with tab_export:
         theme_flag = "whatsapp" if "WhatsApp" in theme else "roblox"
         lang_flag = script_language.lower()
         
-        # We need to escape quotes properly for Windows powershell/cmd
-        escaped_json = voice_map_json.replace('"', '\\"')
-        cmd = f'python cli.py --format chat --script "{script_path}" --output ui_render_v2.mp4 --title "UI Render" --theme {theme_flag} --language {lang_flag} --voice_map "{escaped_json}"'
+        # Argument list (no shell): UI values are passed verbatim, never parsed by a shell.
+        cmd = [
+            sys.executable, "cli.py",
+            "--format", "chat",
+            "--script", str(script_path),
+            "--output", "ui_render_v2.mp4",
+            "--title", "UI Render",
+            "--theme", theme_flag,
+            "--language", lang_flag,
+            "--voice_map", voice_map_json,
+        ]
         
         # Execute
-        st.write(f"Executing: `{cmd}`")
-        import subprocess
+        st.write(f"Executing: `{subprocess.list2cmdline(cmd)}`")
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
-        subprocess.run(cmd, env=env, shell=True)
+        subprocess.run(cmd, env=env, shell=False, check=False)
         
         output_file = "output/ui_render_v2.mp4"
         if os.path.exists(output_file):

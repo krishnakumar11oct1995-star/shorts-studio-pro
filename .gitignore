@@ -15,3 +15,9 @@ test_output_tts/
 !assets/logo.svg
 !assets/
 !assets/**
+
+# Nested repos (accidentally tracked as gitlinks)
+/Audio8_TTS/
+/CodeVideoModel/
+/Papermorph/
+/stickman-video-director/
